@@ -3,7 +3,8 @@ enyo.kind({
   kind: 'enyo.Control',
   published: {
     totalRequests: 1,
-    concurrency: 1
+    concurrency: 1,
+    query: ''
   },
   events: {
     onStartTest: ''
@@ -17,11 +18,16 @@ enyo.kind({
       { content: 'Concurrent Requests:&nbsp;', allowHtml: true },
       { name: 'concurrency', kind: 'onyx.Input', type: 'number', value: 1 }
     ]},
+    { kind: 'onyx.InputDecorator', style: 'display: block', components: [
+      { content: 'Query Data:&nbsp;', allowHtml: true },
+      { name: 'query', kind: 'onyx.Input' }
+    ]},
     { kind: 'onyx.Button', ontap: 'beginTest', content: 'Start Test' }
   ],
   bindings: [
     { from: '.$.requests.value', to: '.totalRequests' },
-    { from: '.$.concurrency.value', to: '.concurrency' }
+    { from: '.$.concurrency.value', to: '.concurrency' },
+    { from: '.$.query.value', to: '.query' }
   ],
   beginTest: function() {
     this.doStartTest();
@@ -122,7 +128,14 @@ enyo.kind({
         // Start/end times by reqID
         // e.g. "some-id" : { startTime: 0, endTime: 10, duration: 10 }
         responseTimes = {},
-        startTime, endTime, modeTime, meanTime;
+        startTime, endTime, modeTime, meanTime, query;
+
+    // setup query, if any
+    try {
+      query = JSON.parse(this.$.options.query);
+    } catch(e) {
+      // probably nothing to send
+    }
 
     function calculateTimes() {
       var keys = enyo.keys(responseTimes),
@@ -280,6 +293,11 @@ enyo.kind({
               method: 'GET',
               data: {}
             };
+
+        if(query) {
+          // enyo.mixin(payload, query);
+          payload.data = query;
+        }
 
         client.write(payload);
 
